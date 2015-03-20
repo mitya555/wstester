@@ -11,7 +11,7 @@
 <script runat="server">
 
 	private HiddenField bodyChanged;
-	private CheckBox formatResultXml;
+	private CheckBox formatResultXml, showResultInPopup;
 
 	protected void Page_PreInit(object sender, EventArgs e)
 	{
@@ -113,6 +113,15 @@
 		};
 		formatResultXml.Style.Add("vertical-align", "bottom");
 		AddControl(CtrlContainer, formatResultXml);
+
+		showResultInPopup = new CheckBox()
+		{
+			ID = "show-result-popup",
+			Text = "Show Result in a Popup",
+			TextAlign = TextAlign.Right
+		};
+		showResultInPopup.Style.Add("vertical-align", "bottom");
+		AddControl(CtrlContainer, showResultInPopup);
 
 		bodyChanged = new HiddenField()
 		{
@@ -219,7 +228,8 @@
 					Server.HtmlEncode(result) +
 					"</pre></div>");
 
-				ClientScript.RegisterStartupScript(GetType(), "xml-fancybox-startup", @"
+				if (showResultInPopup.Checked)
+					ClientScript.RegisterStartupScript(GetType(), "xml-fancybox-startup", @"
 	jQuery(function($) {
 		$.fancybox.open($.extend({ type: 'inline', href: '#xml-div' }, get_fancybox_options('80%', '80%')));
 	});
@@ -278,6 +288,7 @@
 	<script type='text/javascript' src='<%= ResolveUrl("~/js/fancybox213/jquery.fancybox.pack.js?v=2.1.3") %>'></script>
 	<script type='text/javascript' src='<%= ResolveUrl("~/js/app-fancybox.js") %>'></script>
 	<script type='text/javascript' src='<%= ResolveUrl("~/js/jquery.placeholder.min.js") %>'></script>
+	<%--<script type='text/javascript' src="<%= ResolveUrl("~/js/cookies.js") %>"></script>--%>
 </head>
 <body>
 	<a href='Wsdl.aspx?operation=<%= Server.UrlEncode(Request["operation"]) %>'>&laquo; back to WSDL</a>

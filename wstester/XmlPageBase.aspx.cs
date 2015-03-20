@@ -110,19 +110,19 @@ namespace wstester
 			base.OnInit(e);
 			ClientScript.RegisterStartupScript(GetType(), "xml-page-base-startup-script", @"
 	function togglePnl(a) {
-		var $cont = $(a).parents('div.panel-class:first'),
-			hidden = ($cont.children('input[type=""hidden""]').length > 0);
+		var $pnl = $(a).parents('div.panel-class:first'),
+			hidden = ($pnl.children('input[type=""hidden""]').length > 0);
 		if (!hidden)
-			$cont.append('<input type=""hidden"" name=""_hide_' + $cont[0].id + '"" />');
+			$pnl.append('<input type=""hidden"" name=""_hide_' + $pnl[0].id + '"" />');
 		else
-			$cont.children('input[type=""hidden""]').remove();
+			$pnl.children('input[type=""hidden""]').remove();
 		$(a).html(hidden ? '[&ndash;]' : '[+]');
-		$cont.children('nobr,div.panel-class,div.hideable,a').css('display', hidden ? '' : 'none');
+		$pnl.children('span').css('display', hidden ? '' : 'none');
 	}
 
 	$('#" + CtrlContainer.ClientID + @" div.panel-class').each(function() {
 		var max_width = 0;
-		$(this).children('nobr').children('span:first-child').each(function() {
+		$(this).children('span').children('nobr').children('span:first-child').each(function() {
 			var w = $(this).width();
 			if (w > max_width)
 				max_width = w;
@@ -195,6 +195,8 @@ namespace wstester
 								"<table border='0' cellspacing='0' cellpadding='0' width='100%'><tr><td style='white-space:nowrap;'>");
 							AddLiteral(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);'>[&ndash;]</a>").Visible = !contentNode.hidden;
 							AddLiteral(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name));
+							if (!contentNode.Name.Equals(contentNode.TypeName) && ("" + contentNode.TypeName).Trim() != "")
+								AddLiteral(pnl, "&nbsp;:&nbsp;" + Server.HtmlEncode(contentNode.TypeName));
 							AddLiteral(pnl, "</td><td width='100%'><hr class='hr-class'></td><td>");
 							if (delete != null)
 								AddControl(pnl, delete);
@@ -207,7 +209,9 @@ namespace wstester
 							{
 								PlaceHolder placeholder = new PlaceHolder() { Visible = !contentNode.hidden };
 								AddControl(pnl, placeholder);
-								BuildControls(node.ChildNodes, placeholder);
+								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span");
+								AddControl(placeholder, cont);
+								BuildControls(node.ChildNodes, cont);
 								AddVerticalPadding(pnl, true);
 							}
 						}

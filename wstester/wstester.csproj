@@ -80,6 +80,7 @@
     <Reference Include="System.Web.Mobile" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="js\cookies.js" />
     <Content Include="XmlPageBase.aspx" />
     <Content Include="Elem.aspx" />
     <Content Include="Xsd.aspx" />
