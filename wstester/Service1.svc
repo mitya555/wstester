@@ -1,0 +1,42 @@
+﻿<%@ ServiceHost Language="C#" Debug="true" Service="wstester.Service1" CodeBehind="Service1.svc.cs" %>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.ServiceModel;
+using System.ServiceModel.Activation;
+using System.ServiceModel.Web;
+using System.Text;
+
+namespace wstester
+{
+	using System.ComponentModel;
+	
+	[ServiceContract(Namespace = "http://ws.dc.gov/")]
+	[AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
+	public class Service1
+	{
+		// To use HTTP GET, add [WebGet] attribute. (Default ResponseFormat is WebMessageFormat.Json)
+		// To create an operation that returns XML,
+		//     add [WebGet(ResponseFormat=WebMessageFormat.Xml)],
+		//     and include the following line in the operation body:
+		//         WebOperationContext.Current.OutgoingResponse.ContentType = "text/xml";
+		[OperationContract]
+		[WebGet]
+		public void DoWork1()
+		{
+			// Add your operation implementation here
+			return;
+		}
+
+		// Add more operations here and mark them with [OperationContract]
+		public enum GetDateTimeOptions { [Description("Current Date/Time")]Now, [Description("Date/Time from String")]from_String }
+		[OperationContract]
+		[WebGet]
+		public DateTime GetDateTime(GetDateTimeOptions option, string dateTime)
+		{
+			// Add your operation implementation here
+			return option == GetDateTimeOptions.Now ? DateTime.Now : DateTime.Parse(dateTime);
+		}
+	}
+}

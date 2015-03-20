@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wstester", "wstester\wstester.csproj", "{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "winwstester", "winwstester\winwstester.csproj", "{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}"
+EndProject
+Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 3
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = wstester\\wstester.csproj
+		SccLocalPath1 = .
+		SccProjectFilePathRelativizedFromConnection1 = wstester\\
+		SccProjectUniqueName2 = winwstester\\winwstester.csproj
+		SccLocalPath2 = .
+		SccProjectFilePathRelativizedFromConnection2 = winwstester\\
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
