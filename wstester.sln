@@ -6,16 +6,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "winwstester", "winwstester\winwstester.csproj", "{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}"
 EndProject
 Global
-	GlobalSection(SourceCodeControl) = preSolution
-		SccNumberOfProjects = 3
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = wstester\\wstester.csproj
-		SccLocalPath1 = .
-		SccProjectFilePathRelativizedFromConnection1 = wstester\\
-		SccProjectUniqueName2 = winwstester\\winwstester.csproj
-		SccLocalPath2 = .
-		SccProjectFilePathRelativizedFromConnection2 = winwstester\\
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
