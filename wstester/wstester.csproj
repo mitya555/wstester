@@ -83,7 +83,7 @@
     <Content Include="Default.aspx" />
     <Content Include="Headers.aspx" />
     <Content Include="Images\BLANK.gif" />
-    <Content Include="Ionic.Zlib.dll" />
+    <None Include="Ionic.Zlib.dll" />
     <Content Include="js\app-fancybox.js" />
     <Content Include="Images\DELETE-1.gif" />
     <Content Include="Images\DELETE.gif" />
