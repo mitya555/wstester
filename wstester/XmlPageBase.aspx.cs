@@ -40,20 +40,15 @@ namespace wstester
 			return AddControl(container, (Control)control);
 		}
 
-		public static Literal AddLiteral(Control container, string text)
+		public static LiteralControl AddLiteral(Control container, string text)
 		{
-			return (Literal)AddTextControl(container, new Literal(), text);
-		}
-
-		public static void AddVerticalPadding(Control container, bool hideable)
-		{
-			AddLiteral(container, // "<div style='height: " + STYLE_PADDING_VERTICAL + ";'></div>");
-				"<div class='vertical-margin" + (hideable ? " hideable" : "") + "'></div>");
+			return (LiteralControl)AddTextControl(container, new LiteralControl(), text);
 		}
 
 		public static void AddVerticalPadding(Control container)
 		{
-			AddVerticalPadding(container, false);
+			AddLiteral(container, // "<div style='height: " + STYLE_PADDING_VERTICAL + ";'></div>");
+				"<div class='vertical-margin'></div>");
 		}
 
 
@@ -110,27 +105,35 @@ namespace wstester
 			base.OnInit(e);
 			ClientScript.RegisterStartupScript(GetType(), "xml-page-base-startup-script", @"
 	function togglePnl(a) {
-		var $pnl = $(a).parents('div.panel-class:first'),
-			hidden = ($pnl.children('input[type=""hidden""]').length > 0);
+		var $pnl = $(a).parents('div.panel-class:first'), pnl_id = $pnl[0].id, $form = $(theForm),
+			$hidden = $form.children('input#_hide_' + pnl_id), hidden = ($hidden.length > 0);
 		if (!hidden)
-			$pnl.append('<input type=""hidden"" name=""_hide_' + $pnl[0].id + '"" />');
+			$form.append('<input type=""hidden"" name=""_hide_' + pnl_id + '"" id=""_hide_' + pnl_id + '"" />');
 		else
-			$pnl.children('input[type=""hidden""]').remove();
+			$hidden.remove();
 		$(a).html(hidden ? '[&ndash;]' : '[+]');
 		$pnl.children('span').css('display', hidden ? '' : 'none');
+		adjustLabelWidth();
 	}
 
-	$('#" + CtrlContainer.ClientID + @" div.panel-class').each(function() {
-		var max_width = 0;
-		$(this).children('span').children('nobr').children('span:first-child').each(function() {
-			var w = $(this).width();
-			if (w > max_width)
-				max_width = w;
-		}).css({ width: max_width + 'px', display: 'inline-block' });
-	});
+	function adjustLabelWidth() {
+		$('#" + CtrlContainer.ClientID + @" div.panel-class').each(function() {
+			var max_width = 0;
+			$(this).children('span').children('nobr').children('span:first-child').each(function() {
+				var w = $(this).width();
+				if (w > max_width)
+					max_width = w;
+			}).css({ width: max_width + 'px', display: 'inline-block' });
+		});
+	}
+
+	adjustLabelWidth();
 
 	$('input, textarea').placeholder();
 ", true);
+
+			Response.Cache.SetCacheability(HttpCacheability.NoCache);
+			Response.Cache.SetNoStore();
 		}
 
 		protected void BuildControls(BaseNode[] nodes, Control container)
@@ -188,12 +191,15 @@ namespace wstester
 									BorderColor = Color.Gray,
 									CssClass = "panel-class"
 								};
+							container.Controls.Add(pnl);
+							AddVerticalPadding(container);
+							var _hidden = (Request.Form["_hide_" + pnl.ClientID] != null);
 							//pnl.Style.Add("padding-right", STYLE_PADDING_RIGHT);
 							//pnl.Style.Add("padding-left", STYLE_PADDING_LEFT);
 							AddVerticalPadding(pnl);
 							AddLiteral(pnl, "<div class='title-class'>" +
 								"<table border='0' cellspacing='0' cellpadding='0' width='100%'><tr><td style='white-space:nowrap;'>");
-							AddLiteral(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);'>[&ndash;]</a>").Visible = !contentNode.hidden;
+							AddLiteral(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);'>[" + (_hidden ? "+" : "&ndash;") + "]</a>").Visible = !contentNode.hidden;
 							AddLiteral(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name));
 							if (!contentNode.Name.Equals(contentNode.TypeName) && ("" + contentNode.TypeName).Trim() != "")
 								AddLiteral(pnl, "&nbsp;:&nbsp;" + Server.HtmlEncode(contentNode.TypeName));
@@ -202,17 +208,18 @@ namespace wstester
 								AddControl(pnl, delete);
 							AddLiteral(pnl, "</td></tr></table></div>");
 							AddVerticalPadding(pnl);
-							container.Controls.Add(pnl);
-							AddVerticalPadding(container, true);
 							contentNode.controlID = pnl.ID;
 							if (node.ChildNodes != null && node.ChildNodes.Length > 0)
 							{
-								PlaceHolder placeholder = new PlaceHolder() { Visible = !contentNode.hidden };
-								AddControl(pnl, placeholder);
-								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span");
-								AddControl(placeholder, cont);
+								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span") { Visible = !contentNode.hidden };
+								AddControl(pnl, cont);
+								if (_hidden)
+								{
+									cont.Style.Add("display", "none");
+									AddControl(Form, new Literal() { Text = "<input type='hidden' name='_hide_" + pnl.ClientID + "' id='_hide_" + pnl.ClientID + "' />" });
+								}
 								BuildControls(node.ChildNodes, cont);
-								AddVerticalPadding(pnl, true);
+								AddVerticalPadding(cont);
 							}
 						}
 						else
