@@ -119,7 +119,7 @@ namespace wstester
 	function adjustLabelWidth() {
 		$('#" + CtrlContainer.ClientID + @" div.panel-class').each(function() {
 			var max_width = 0;
-			$(this).children('span').children('nobr').children('span:first-child').each(function() {
+			$(this).children('span:visible').children('nobr').children('span:first-child').each(function() {
 				var w = $(this).width();
 				if (w > max_width)
 					max_width = w;
@@ -197,13 +197,11 @@ namespace wstester
 							//pnl.Style.Add("padding-right", STYLE_PADDING_RIGHT);
 							//pnl.Style.Add("padding-left", STYLE_PADDING_LEFT);
 							AddVerticalPadding(pnl);
-							AddLiteral(pnl, "<div class='title-class'>" +
-								"<table border='0' cellspacing='0' cellpadding='0' width='100%'><tr><td style='white-space:nowrap;'>");
+							AddLiteral(pnl, "<div class='title-class'><table border='0' cellspacing='0' cellpadding='0' width='100%'><tr><td style='white-space:nowrap;'>");
 							AddLiteral(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);'>[" + (_hidden ? "+" : "&ndash;") + "]</a>").Visible = !contentNode.hidden;
-							AddLiteral(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name));
-							if (!contentNode.Name.Equals(contentNode.TypeName) && ("" + contentNode.TypeName).Trim() != "")
-								AddLiteral(pnl, "&nbsp;:&nbsp;" + Server.HtmlEncode(contentNode.TypeName));
-							AddLiteral(pnl, "</td><td width='100%'><hr class='hr-class'></td><td>");
+							AddLiteral(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name) +
+								(!contentNode.Name.Equals(contentNode.TypeName) && ("" + contentNode.TypeName).Trim() != "" ? "&nbsp;:&nbsp;" + Server.HtmlEncode(contentNode.TypeName) : "") +
+								"</td><td width='100%'><hr class='hr-class'></td><td>");
 							if (delete != null)
 								AddControl(pnl, delete);
 							AddLiteral(pnl, "</td></tr></table></div>");
@@ -211,12 +209,12 @@ namespace wstester
 							contentNode.controlID = pnl.ID;
 							if (node.ChildNodes != null && node.ChildNodes.Length > 0)
 							{
-								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span") { Visible = !contentNode.hidden };
+								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span") { ViewStateMode = System.Web.UI.ViewStateMode.Disabled, Visible = !contentNode.hidden };
 								AddControl(pnl, cont);
 								if (_hidden)
 								{
 									cont.Style.Add("display", "none");
-									AddControl(Form, new Literal() { Text = "<input type='hidden' name='_hide_" + pnl.ClientID + "' id='_hide_" + pnl.ClientID + "' />" });
+									AddLiteral(Form, "<input type='hidden' name='_hide_" + pnl.ClientID + "' id='_hide_" + pnl.ClientID + "' />");
 								}
 								BuildControls(node.ChildNodes, cont);
 								AddVerticalPadding(cont);
@@ -225,23 +223,14 @@ namespace wstester
 						else
 						{
 							AddLiteral(container, "<nobr>&nbsp;");
-							var lbl = new Label();
-							AddTextControl(container, lbl, contentNode.Name + ": ");
-							lbl.CssClass = "label-class";
-							//lbl.AssociatedControlID = node.Id.ToString();
-							PlaceHolder placeholder = new PlaceHolder();
-							//placeholder.Visible = !contentNode.hidden;
-							AddControl(container, placeholder);
-							var webCtrl = (WebControl)AddControl(placeholder, contentNode.IsEnumeration ? (Control)new DropDownList() : (Control)new TextBox());
-							webCtrl.ID = node.Id.ToString();
+							AddTextControl(container, new Label() { CssClass = "label-class"/*, AssociatedControlID = node.Id.ToString()*/ }, contentNode.Name + ": ");
+							AddLiteral(container, "<span" + (contentNode.hidden ? " style='visibility:hidden;'" : "") + ">");
+							var webCtrl = (WebControl)AddControl(container, contentNode.IsEnumeration ? (Control)new DropDownList() : (Control)new TextBox());
+							AddLiteral(container, "</span>");
+							webCtrl.ViewStateMode = System.Web.UI.ViewStateMode.Enabled;
+							contentNode.controlID = webCtrl.ID = node.Id.ToString();
 							webCtrl.CssClass = "input-text-class" + (contentNode.IsEnumeration ? " input-select-class" : "");
-							webCtrl.EnableViewState = false;
-							contentNode.controlID = webCtrl.ID;
-							if (contentNode.hidden)
-								webCtrl.Style.Add("visibility", "hidden");
-							else
-								webCtrl.Style.Remove("visibility");
-							if ("" + contentNode.TypeName != "")
+							if (("" + contentNode.TypeName).Trim() != "")
 								webCtrl.Attributes.Add("placeholder", contentNode.TypeName);
 							if (contentNode.IsEnumeration)
 								foreach (var item in new string[] { "" }.Concat(contentNode.SchemaType.Enumeration))
