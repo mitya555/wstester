@@ -62,7 +62,7 @@
 		var xml = doc.GetXml(true);
 
 		AddVerticalPadding(Page.Form);
-		AddLiteral(Page.Form, "<div id='xml-div'><pre>" + Server.HtmlEncode(xml) + "</pre></div>");
+		AddLiteralControl(Page.Form, "<div id='xml-div'><pre>" + Server.HtmlEncode(xml) + "</pre></div>");
 
 		ClientScript.RegisterStartupScript(GetType(), "xml-fancybox-startup", @"
 	jQuery(function($) {

@@ -174,7 +174,7 @@
 				var xml = SoapBuildXml(schemaNodes.Nodes, "soap".Equals(bindingNamespacePrefix), true);
 				UpdateContentLengthHeader(xml);
 				AddVerticalPadding(Page.Form);
-				AddLiteral(Page.Form, "<div id='xml-div'><pre>" +
+				AddLiteralControl(Page.Form, "<div id='xml-div'><pre>" +
 					Server.HtmlEncode(Http.BuildRequest(port_url, xml, Headers.Dict.Values.Cast<Http.Header>())) +
 					"</pre></div>");
 
@@ -224,7 +224,7 @@
 //#endif
 
 				AddVerticalPadding(Page.Form);
-				AddLiteral(Page.Form, "<div id='xml-div'><pre>" +
+				AddLiteralControl(Page.Form, "<div id='xml-div'><pre>" +
 					Server.HtmlEncode(result) +
 					"</pre></div>");
 

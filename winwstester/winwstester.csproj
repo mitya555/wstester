@@ -19,6 +19,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
     <PublishUrl>http://localhost/winwstester/</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
@@ -33,7 +34,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -53,7 +53,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CassiniDev-lib, Version=3.5.1.7, Culture=neutral, PublicKeyToken=f7f6e0b4240c7c27, processorArchitecture=x86" />
+    <Reference Include="CassiniDev4-lib, Version=4.0.1.6, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>cassini\net40\debug\CassiniDev4-lib.dll</HintPath>
+    </Reference>
+    <Reference Include="Common.Logging, Version=3.0.0.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Common.Logging.3.0.0\net40\Common.Logging.dll</HintPath>
+    </Reference>
+    <Reference Include="Common.Logging.Core, Version=3.0.0.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Common.Logging.Core.3.0.0\net40\Common.Logging.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -146,6 +157,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon1.transparent.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cassini\net35\debug\CassiniDev-lib.dll" />
+    <None Include="cassini\net40\debug\CassiniDev4-lib.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Common.Logging.3.0.0\net35\Common.Logging.dll" />
+    <None Include="Common.Logging.3.0.0\net35\Common.Logging.pdb" />
+    <None Include="Common.Logging.3.0.0\net35\Common.Logging.xml" />
+    <None Include="Common.Logging.3.0.0\net40\Common.Logging.dll" />
+    <None Include="Common.Logging.3.0.0\net40\Common.Logging.pdb" />
+    <None Include="Common.Logging.3.0.0\net40\Common.Logging.xml" />
+    <None Include="Common.Logging.Core.3.0.0\net35\Common.Logging.Core.dll" />
+    <None Include="Common.Logging.Core.3.0.0\net35\Common.Logging.Core.pdb" />
+    <None Include="Common.Logging.Core.3.0.0\net35\Common.Logging.Core.xml" />
+    <None Include="Common.Logging.Core.3.0.0\net40\Common.Logging.Core.dll" />
+    <None Include="Common.Logging.Core.3.0.0\net40\Common.Logging.Core.pdb" />
+    <None Include="Common.Logging.Core.3.0.0\net40\Common.Logging.Core.xml" />
+    <None Include="Common.Logging.Core.3.0.0\portable-win+net40+sl40+wp7\Common.Logging.Core.dll" />
+    <None Include="Common.Logging.Core.3.0.0\portable-win+net40+sl40+wp7\Common.Logging.Core.pdb" />
+    <None Include="Common.Logging.Core.3.0.0\portable-win+net40+sl40+wp7\Common.Logging.Core.XML" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
