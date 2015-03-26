@@ -34,7 +34,7 @@ namespace wstester
 		protected BaseNode[] ProcessSchema(XmlSchemaObject schema, int recursionDepth)
 		{
 			if (recursionDepth > 25)
-				return new BaseNode[] { };
+				return null;
 
 			if (schema is XmlSchema)
 			{
@@ -109,7 +109,7 @@ namespace wstester
 						new GroupNode(this) { isSequence = (schema is XmlSchemaSequence) };
 					// process all children
 					foreach (XmlSchemaObject schemaObject in ((XmlSchemaGroupBase)schema).Items)
-						resList.AddRange(ProcessSchema(schemaObject, recursionDepth + 1));
+						resList.AddRange(ProcessSchema(schemaObject, recursionDepth + 1) ?? new BaseNode[0]);
 					// return the node with the processed children
 					resNode.ChildNodes = resList.ToArray();
 					return new BaseNode[] { resNode };
@@ -140,7 +140,7 @@ namespace wstester
 			{
 				return ProcessSchema(((XmlSchemaGroup)schema).Particle, recursionDepth + 1);
 			}
-			return new BaseNode[] { };
+			return null;
 		}
 
 		public SchemaNodes LoadXmlSchema(XmlSchemaObject schema)
@@ -170,31 +170,33 @@ namespace wstester
 				schemaNodes.NodeTable[id] = this;
 		}
 		public NodeType Type { get { return type; } }
-		private BaseNode[] childNodes = new BaseNode[] { };
+		private BaseNode[] childNodes;
 		public BaseNode[] ChildNodes
 		{
 			get { return childNodes; }
 			set
 			{
 				childNodes = value;
-				foreach (BaseNode child in childNodes)
-					child.parentNode = this;
+				if (childNodes != null)
+					foreach (BaseNode child in childNodes)
+						child.parentNode = this;
 			}
 		}
 		public IEnumerable<BaseNode> AllChildNodes()
 		{
-			foreach (var child in childNodes)
-			{
-				yield return child;
-				foreach (var grandchild in child.AllChildNodes())
-					yield return grandchild;
-			}
+			if (childNodes != null)
+				foreach (var child in childNodes)
+				{
+					yield return child;
+					foreach (var grandchild in child.AllChildNodes())
+						yield return grandchild;
+				}
 		}
 		public int Id { get { return id; } }
 		public abstract BaseNode Clone();
 		protected static BaseNode[] CloneChildren(BaseNode[] nodes)
 		{
-			return nodes.Select(n => n.Clone()).ToArray();
+			return nodes != null ? nodes.Select(n => n.Clone()).ToArray() : null;
 		}
 		protected BaseNode[] CloneChildren()
 		{
@@ -309,7 +311,7 @@ namespace wstester
 					return;
 				inheritance = new Dictionary<XmlQualifiedName, BaseNode[]>();
 			}
-			inheritance.Add(schemaTypeQN, new BaseNode[] { });
+			inheritance.Add(schemaTypeQN, null);
 			foreach (var _schemaTypeQN in schemaNodes.schemaTypes[schemaTypeQN].derivedTypeQNs)
 				BuildInheritance(_schemaTypeQN, false);
 			if (outerScope && inheritance.Count == 1)
