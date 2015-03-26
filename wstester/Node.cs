@@ -18,7 +18,10 @@ namespace wstester
 		public IDictionary<int, BaseNode> NodeTable { get { return auxNodeTable; } }
 		public BaseNode[] Nodes { get { return nodes; } }
 
-		private static XmlSchema GetSchema(XmlSchemaObject schemaObject)
+		public Dictionary<XmlQualifiedName, SchemaType> schemaTypes = new Dictionary<XmlQualifiedName,SchemaType>();
+		public Dictionary<XmlQualifiedName, SchemaElement> schemaElements = new Dictionary<XmlQualifiedName,SchemaElement>();
+
+		public static XmlSchema GetSchema(XmlSchemaObject schemaObject)
 		{
 			while (true)
 			{
@@ -28,15 +31,18 @@ namespace wstester
 			}
 		}
 
-		protected BaseNode[] ProcessSchema(XmlSchemaObject schema)
+		protected BaseNode[] ProcessSchema(XmlSchemaObject schema, int recursionDepth)
 		{
+			if (recursionDepth > 25)
+				return new BaseNode[] { };
+
 			if (schema is XmlSchema)
 			{
 				// process child schema nodes
 				List<BaseNode> resList = new List<BaseNode>();
 				// for "schema" parent node process only "element" schema nodes
 				foreach (XmlSchemaElement schemaElement in ((XmlSchema)schema).Elements.Values)
-					resList.AddRange(ProcessSchema(schemaElement));
+					resList.AddRange(ProcessSchema(schemaElement, recursionDepth + 1));
 				// return array of nodes
 				return resList.ToArray();
 			}
@@ -50,7 +56,7 @@ namespace wstester
 				//if (type is XmlSchemaComplexType)
 				//{
 				//	resNode.isComplexType = true;
-				//	resNode.ChildNodes = ProcessSchema(type);
+				//	resNode.ChildNodes = ProcessSchema(type, recursionDepth + 1);
 				//}
 				// is element optional?
 				resNode.isOptional = (schemaAttribute.Use == XmlSchemaUse.Optional);
@@ -75,7 +81,14 @@ namespace wstester
 					if (type is XmlSchemaComplexType)
 					{
 						resNode.isComplexType = true;
-						resNode.ChildNodes = ProcessSchema(type);
+						if (resNode.inheritance == null)
+							resNode.ChildNodes = ProcessSchema(type, recursionDepth + 1);
+						else
+						{
+							foreach (var _schemaTypeQN in resNode.inheritance.Keys.ToArray())
+								resNode.inheritance[_schemaTypeQN] = ProcessSchema(GetSchema(schema).SchemaTypes[_schemaTypeQN], recursionDepth + 1);
+							resNode.ChildNodes = resNode.inheritance[resNode.SchemaTypeQN];
+						}
 					}
 					// is element optional?
 					resNode.isOptional = (schemaElement.MinOccurs == 0 || (schema.Parent is XmlSchemaChoice && ((XmlSchemaChoice)schema.Parent).MinOccurs == 0));
@@ -96,14 +109,14 @@ namespace wstester
 						new GroupNode(this) { isSequence = (schema is XmlSchemaSequence) };
 					// process all children
 					foreach (XmlSchemaObject schemaObject in ((XmlSchemaGroupBase)schema).Items)
-						resList.AddRange(ProcessSchema(schemaObject));
+						resList.AddRange(ProcessSchema(schemaObject, recursionDepth + 1));
 					// return the node with the processed children
 					resNode.ChildNodes = resList.ToArray();
 					return new BaseNode[] { resNode };
 				}
 				else if (schema is XmlSchemaGroupRef)
 				{
-					return ProcessSchema(((XmlSchemaGroupRef)schema).Particle);
+					return ProcessSchema(((XmlSchemaGroupRef)schema).Particle, recursionDepth + 1);
 				}
 			}
 			else if (schema is XmlSchemaComplexType)
@@ -114,18 +127,18 @@ namespace wstester
 					BaseNode resNode = new GroupNode(this);
 					// process all attributes
 					foreach (var attr in ((XmlSchemaComplexType)schema).Attributes)
-						resList.AddRange(ProcessSchema(attr));
+						resList.AddRange(ProcessSchema(attr, recursionDepth + 1));
 					// process the particle
-					resList.AddRange(ProcessSchema(((XmlSchemaComplexType)schema).ContentTypeParticle));
+					resList.AddRange(ProcessSchema(((XmlSchemaComplexType)schema).ContentTypeParticle, recursionDepth + 1));
 					// return the node with the processed children
 					resNode.ChildNodes = resList.ToArray();
 					return new BaseNode[] { resNode };
 				}
-				return ProcessSchema(((XmlSchemaComplexType)schema).ContentTypeParticle);
+				return ProcessSchema(((XmlSchemaComplexType)schema).ContentTypeParticle, recursionDepth + 1);
 			}
 			else if (schema is XmlSchemaGroup)
 			{
-				return ProcessSchema(((XmlSchemaGroup)schema).Particle);
+				return ProcessSchema(((XmlSchemaGroup)schema).Particle, recursionDepth + 1);
 			}
 			return new BaseNode[] { };
 		}
@@ -133,7 +146,7 @@ namespace wstester
 		public SchemaNodes LoadXmlSchema(XmlSchemaObject schema)
 		{
 			auxNodeTable = new Dictionary<int, BaseNode>();
-			nodes = ProcessSchema(schema);
+			nodes = ProcessSchema(schema, 1);
 			return this;
 		}
 		public static SchemaNodes FromXmlSchema(XmlSchemaObject schema) { return new SchemaNodes().LoadXmlSchema(schema); }
@@ -179,16 +192,13 @@ namespace wstester
 		}
 		public int Id { get { return id; } }
 		public abstract BaseNode Clone();
+		protected static BaseNode[] CloneChildren(BaseNode[] nodes)
+		{
+			return nodes.Select(n => n.Clone()).ToArray();
+		}
 		protected BaseNode[] CloneChildren()
 		{
-			List<BaseNode> resList = new List<BaseNode>();
-			foreach (BaseNode child in childNodes)
-				resList.Add(child.Clone());
-			return resList.ToArray();
-		}
-		protected void CloneChildren(BaseNode newNode)
-		{
-			newNode.ChildNodes = CloneChildren();
+			return CloneChildren(childNodes);
 		}
 		public void Delete()
 		{
@@ -206,45 +216,105 @@ namespace wstester
 		public XmlQualifiedName QualifiedName;
 		public string[] Enumeration;
 		public bool IsSimpleType;
-		public static SchemaType FromXmlSchemaType(XmlSchemaType xmlSchemaType)
+		public IEnumerable<XmlQualifiedName> derivedTypeQNs;
+		private static IEnumerable<XmlQualifiedName> GetDerivedTypeQNs(XmlSchemaType xmlSchemaType, XmlSchema schema, SchemaNodes schemaNodes)
 		{
-			return new SchemaType() { Name = xmlSchemaType.Name, QualifiedName = xmlSchemaType.QualifiedName, IsSimpleType = xmlSchemaType is XmlSchemaSimpleType,
-				Enumeration = xmlSchemaType is XmlSchemaSimpleType && xmlSchemaType.DerivedBy == XmlSchemaDerivationMethod.Restriction ?
-				((XmlSchemaSimpleTypeRestriction)((XmlSchemaSimpleType)xmlSchemaType).Content).Facets.OfType<XmlSchemaEnumerationFacet>().Select(f => f.Value).ToArray() :
-				null };
+			var qn = xmlSchemaType.QualifiedName;
+			if (qn.IsEmpty)
+				return null;
+
+			return schema.SchemaTypes.Values.OfType<XmlSchemaComplexType>()
+				.Where(t => t.BaseXmlSchemaType.QualifiedName == qn)
+				.Select(t => FromXmlSchemaType(t, schema, schemaNodes).QualifiedName)
+				.ToArray();
+		}
+		public static SchemaType FromXmlSchemaType(XmlSchemaType xmlSchemaType, XmlSchema schema, SchemaNodes schemaNodes)
+		{
+			var qn = xmlSchemaType.QualifiedName;
+			SchemaType res = null;
+			if (qn.IsEmpty || !schemaNodes.schemaTypes.ContainsKey(qn))
+			{
+				res = new SchemaType()
+				{
+					Name = xmlSchemaType.Name,
+					QualifiedName = qn,
+					IsSimpleType = xmlSchemaType is XmlSchemaSimpleType,
+					Enumeration = xmlSchemaType is XmlSchemaSimpleType && xmlSchemaType.DerivedBy == XmlSchemaDerivationMethod.Restriction ?
+						((XmlSchemaSimpleTypeRestriction)((XmlSchemaSimpleType)xmlSchemaType).Content).Facets.OfType<XmlSchemaEnumerationFacet>().Select(f => f.Value).ToArray() : null,
+					derivedTypeQNs = GetDerivedTypeQNs(xmlSchemaType, schema, schemaNodes)
+				};
+				if (!qn.IsEmpty)
+					schemaNodes.schemaTypes.Add(qn, res);
+			}
+			return res ?? schemaNodes.schemaTypes[qn];
 		}
 	}
 	[Serializable]
-	class SchemaElement
+	public class SchemaElement
 	{
 		public XmlQualifiedName QualifiedName;
-		public SchemaType ElementSchemaType;
+		public XmlQualifiedName SchemaTypeQN;
+		public SchemaType SchemaType;
 		public XmlSchemaForm Form;
-		public static SchemaElement FromXmlSchemaElement(XmlSchemaElement xmlSchemaElement)
+		public static XmlQualifiedName FromXmlSchemaElement(XmlSchemaElement xmlSchemaElement, SchemaNodes schemaNodes)
 		{
-			return new SchemaElement() { QualifiedName = xmlSchemaElement.QualifiedName,
-				ElementSchemaType = SchemaType.FromXmlSchemaType(xmlSchemaElement.ElementSchemaType), Form = xmlSchemaElement.Form };
+			return CreateSchemaElement(xmlSchemaElement.QualifiedName, xmlSchemaElement.ElementSchemaType, xmlSchemaElement.Form, SchemaNodes.GetSchema(xmlSchemaElement), schemaNodes);
 		}
-		public static SchemaElement FromXmlSchemaAttribute(XmlSchemaAttribute xmlSchemaAttribute)
+		public static XmlQualifiedName FromXmlSchemaAttribute(XmlSchemaAttribute xmlSchemaAttribute, SchemaNodes schemaNodes)
 		{
-			return new SchemaElement()
+			return CreateSchemaElement(xmlSchemaAttribute.QualifiedName, xmlSchemaAttribute.AttributeSchemaType, xmlSchemaAttribute.Form, SchemaNodes.GetSchema(xmlSchemaAttribute), schemaNodes);
+		}
+		public static XmlQualifiedName CreateSchemaElement(XmlQualifiedName qn, XmlSchemaType xst, XmlSchemaForm xsf, XmlSchema schema, SchemaNodes schemaNodes)
+		{
+			if (!schemaNodes.schemaElements.ContainsKey(qn))
 			{
-				QualifiedName = xmlSchemaAttribute.QualifiedName,
-				ElementSchemaType = SchemaType.FromXmlSchemaType(xmlSchemaAttribute.AttributeSchemaType),
-				Form = xmlSchemaAttribute.Form
-			};
+				var st = SchemaType.FromXmlSchemaType(xst, schema, schemaNodes);
+				schemaNodes.schemaElements.Add(qn, new SchemaElement()
+				{
+					QualifiedName = qn,
+					SchemaTypeQN = st.QualifiedName,
+					SchemaType = st.QualifiedName.IsEmpty ? st : null,
+					Form = xsf
+				});
+			}
+			return qn;
 		}
 	}
 
 	[Serializable]
 	public class ContentNode : BaseNode
 	{
-		private ContentNode(SchemaElement schemaElement, string targetNamespace, SchemaNodes schemaNodes) :
-			base(NodeType.ContentNode, schemaNodes) { this.schemaElement = schemaElement; this.targetNamespace = targetNamespace; }
+		private ContentNode(XmlQualifiedName schemaElementQN, string targetNamespace, SchemaNodes schemaNodes) :
+			base(NodeType.ContentNode, schemaNodes)
+		{
+			this.schemaElementQN = schemaElementQN;
+			this.schemaTypeQN = SchemaElement.SchemaTypeQN;
+			this.targetNamespace = targetNamespace;
+		}
 		public ContentNode(XmlSchemaElement xmlSchemaElement, string targetNamespace, SchemaNodes schemaNodes) :
-			this(SchemaElement.FromXmlSchemaElement(xmlSchemaElement), targetNamespace, schemaNodes) { }
+			this(SchemaElement.FromXmlSchemaElement(xmlSchemaElement, schemaNodes), targetNamespace, schemaNodes)
+		{
+			BuildInheritance(SchemaElement.SchemaTypeQN, true);
+		}
 		public ContentNode(XmlSchemaAttribute xmlSchemaAttribute, string targetNamespace, SchemaNodes schemaNodes) :
-			this(SchemaElement.FromXmlSchemaAttribute(xmlSchemaAttribute), targetNamespace, schemaNodes) { }
+			this(SchemaElement.FromXmlSchemaAttribute(xmlSchemaAttribute, schemaNodes), targetNamespace, schemaNodes)
+		{
+			BuildInheritance(SchemaElement.SchemaTypeQN, true);
+		}
+		private void BuildInheritance(XmlQualifiedName schemaTypeQN, bool outerScope)
+		{
+			if (outerScope)
+			{
+				if (schemaTypeQN.IsEmpty)
+					return;
+				inheritance = new Dictionary<XmlQualifiedName, BaseNode[]>();
+			}
+			inheritance.Add(schemaTypeQN, new BaseNode[] { });
+			foreach (var _schemaTypeQN in schemaNodes.schemaTypes[schemaTypeQN].derivedTypeQNs)
+				BuildInheritance(_schemaTypeQN, false);
+			if (outerScope && inheritance.Count == 1)
+				inheritance = null;
+		}
 		public bool isAttribute;
 		public bool isComplexType;
 		public bool isArray;
@@ -253,24 +323,35 @@ namespace wstester
 		public bool ToggleHidden() { return (this.hidden = !this.hidden); }
 		private string targetNamespace;
 		public string controlID;
-		private SchemaElement schemaElement;
-		public string Name { get { return schemaElement.QualifiedName.Name; } }
-		public string LocalName { get { return schemaElement.QualifiedName.Name; } }
-		public string NamespaceUri { get { return (!schemaElement.ElementSchemaType.IsSimpleType && schemaElement.ElementSchemaType.Name != null ? schemaElement.ElementSchemaType.QualifiedName : schemaElement.QualifiedName).Namespace; } }
-		public XmlSchemaForm SchemaForm { get { return schemaElement.Form; } }
-		public string TypeName { get { return schemaElement.ElementSchemaType.QualifiedName.IsEmpty ? null : schemaElement.ElementSchemaType.QualifiedName.Name; } }
-		public SchemaType SchemaType { get { return schemaElement.ElementSchemaType; } }
+		private XmlQualifiedName schemaElementQN, schemaTypeQN;
+		public XmlQualifiedName SchemaTypeQN { get { return schemaTypeQN; } set { schemaTypeQN = value; } }
+		private SchemaElement SchemaElement { get { return schemaNodes.schemaElements[schemaElementQN]; } }
+		public SchemaType SchemaType { get { return SchemaElement.SchemaType ?? schemaNodes.schemaTypes[schemaTypeQN]; } }
+		public string Name { get { return schemaElementQN.Name; } }
+		public string LocalName { get { return schemaElementQN.Name; } }
+		public string NamespaceUri { get { return (!SchemaType.IsSimpleType && SchemaType.Name != null ? schemaTypeQN : schemaElementQN).Namespace; } }
+		public XmlSchemaForm SchemaForm { get { return SchemaElement.Form; } }
+		public string TypeName { get { return schemaTypeQN.IsEmpty ? null : schemaTypeQN.Name; } }
 		public bool IsEnumeration { get { return SchemaType.Enumeration != null && SchemaType.Enumeration.Length > 0; } }
 		public string TargetNamespace { get { return targetNamespace; } }
+		public IDictionary<XmlQualifiedName, BaseNode[]> inheritance;
 		public override BaseNode Clone()
 		{
-			ContentNode resNode = new ContentNode(schemaElement, TargetNamespace, schemaNodes);
+			ContentNode resNode = new ContentNode(schemaElementQN, TargetNamespace, schemaNodes);
 			resNode.isAttribute = this.isAttribute;
 			resNode.isComplexType = this.isComplexType;
 			resNode.isArray = this.isArray;
 			resNode.isOptional = this.isOptional;
 			resNode.hidden = this.hidden;
-			CloneChildren(resNode);
+			if (this.inheritance == null)
+				resNode.ChildNodes = CloneChildren();
+			else
+			{
+				resNode.inheritance = new Dictionary<XmlQualifiedName, BaseNode[]>();
+				foreach (var _schemaTypeQN in this.inheritance.Keys)
+					resNode.inheritance[_schemaTypeQN] = CloneChildren(this.inheritance[_schemaTypeQN]);
+				resNode.ChildNodes = resNode.inheritance[resNode.schemaTypeQN = this.schemaTypeQN];
+			}
 			return resNode;
 		}
 	}

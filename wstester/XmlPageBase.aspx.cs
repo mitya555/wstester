@@ -114,7 +114,9 @@ namespace wstester
 		$(a).html(hidden ? '[&ndash;]' : '[+]');
 		$pnl.children('span').css('display', hidden ? '' : 'none');
 		if (hidden)
-			adjustLabelWidth($pnl);
+			$pnl.find('div.panel-class').addBack().each(function() {
+				adjustLabelWidth($(this));
+			});
 	}
 
 	function adjustLabelWidth($pnl) {
