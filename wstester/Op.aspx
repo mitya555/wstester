@@ -89,8 +89,23 @@
 			Session["Operation"] = Request["operation"];
 			Session["SchemaNodes"] = schemaNodes;
 		}
+		// Handle POST commands:
+		if (IsPostBack)
+		{
+			// remove/hide all optional nodes
+			HandlePostCommand("remove_all_optional", val => SetHiddenAllOptional(true));
+			// unhide all optional nodes
+			HandlePostCommand("unhide_all_optional", val => SetHiddenAllOptional(false));
+		}
 	}
 
+	private void SetHiddenAllOptional(bool hidden)
+	{
+		foreach (var _node in BaseNode.AllNodes(schemaNodes.Nodes).OfType<ContentNode>())
+			if (_node.isOptional)
+				_node.hidden = hidden;
+	}
+	
 	protected void Page_Init(object sender, EventArgs e)
 	{
 //        var headers = (Button)AddButtonControl(CtrlContainer, new Button(), "Headers", null);
@@ -264,6 +279,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head id="Head1" runat="server">
 	<title>Web Service Operation</title>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css" />
 	<style type="text/css">
 		body, input, select { font: 8pt Arial; }
 		.label-class { /*font: 9pt Arial;*/ font-weight: bold; font-style: italic; }
@@ -273,17 +289,23 @@
 		.panel-class { padding: 0px 3px 0px 12px; }
 		.vertical-margin { height: 3px; }
 		.title-class { background-color: #B8BFD8; color: #AA0000; font-weight: bold; /*font-family: Verdana;*/ }
-		.title-class a { color: white; font-weight: bold; font-family: Verdana; font-size: 7.5pt; vertical-align: top; }
+		.title-class a { color: white; font-weight: bold; font-family: Verdana; font-size: 7.5pt; /*vertical-align: top;*/ }
 		.hr-class { display: none; }
 		a, a:hover { text-decoration: none; }
 		.submit-button-class { width: 75px; margin-right: 5px; }
 		.placeholder { color: #aaa; }
+		.type-class { color: #003580; }
+		a.type-selector-class { /*color: #006aff;*/ font-weight: normal; }
+		a.plus-minus-class { vertical-align: 1px; }
+		.ui-widget { font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 7.5pt; /*line-height: 7.5pt;*/ }
+		.ui-menu .ui-menu-item { padding-top: 1px; padding-bottom: 1px; }
 	</style>
-	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+	<script type='text/javascript' src="//code.jquery.com/jquery-1.8.3.min.js"></script>
+	<script type='text/javascript' src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 	<!-- Add fancyBox -->
 	<%--<link type='text/css' rel='Stylesheet' href='~/js/fancybox213/jquery.fancybox.css?v=2.1.3' media='screen' />--%>
 	<style type="text/css">
-		@import url('<%= ResolveUrl("~/js/fancybox213/jquery.fancybox.css?v=2.1.3") %>')
+		@import url('<%= ResolveUrl("~/js/fancybox213/jquery.fancybox.css?v=2.1.3") %>');
 	</style>
 	<script type='text/javascript' src='<%= ResolveUrl("~/js/fancybox213/jquery.fancybox.pack.js?v=2.1.3") %>'></script>
 	<script type='text/javascript' src='<%= ResolveUrl("~/js/app-fancybox.js") %>'></script>
@@ -291,7 +313,9 @@
 	<%--<script type='text/javascript' src="<%= ResolveUrl("~/js/cookies.js") %>"></script>--%>
 </head>
 <body>
-	<a href='Wsdl.aspx?operation=<%= Server.UrlEncode(Request["operation"]) %>'>&laquo; back to WSDL</a>
+	<a href='Wsdl.aspx?operation=<%= Server.UrlEncode(Request["operation"]) %>'>&laquo; back to WSDL</a>&nbsp; &nbsp; 
+	<a href='javascript://' onclick="<%= HttpUtility.HtmlAttributeEncode(GeneratePostCommandScript("remove_all_optional", "")) %>">Remove/Hide All Optional</a>&nbsp; &nbsp; 
+	<a href='javascript://' onclick="<%= HttpUtility.HtmlAttributeEncode(GeneratePostCommandScript("unhide_all_optional", "")) %>">Unhide All Optional</a>
 	<form id="form1" runat="server">
 		<!--<table border="0" width="100%"><tr>
 			<td nowrap>Schema URL:&nbsp;</td>

@@ -55,11 +55,17 @@ namespace wstester
 		protected SchemaNodes schemaNodes;
 		protected virtual Control CtrlContainer { get { return Page.Form; } }
 
-		protected void HandlePostCommand(string postCommandParamName, Action<int> postCommandHandler)
+		protected void HandlePostCommand(string postParamName, Action<string> postCommandHandler)
 		{
-			if (Request.Form[postCommandParamName] != null)
+			if (Request.Form[postParamName] != null)
+				postCommandHandler(Request.Form[postParamName]);
+		}
+
+		protected void HandleNodePostCommand(string postParamName, Action<int> postCommandHandler)
+		{
+			if (Request.Form[postParamName] != null)
 			{
-				int id = Convert.ToInt32(Request.Form[postCommandParamName]);
+				int id = Convert.ToInt32(Request.Form[postParamName]);
 				if (schemaNodes.NodeTable.ContainsKey(id))
 				{
 					postCommandHandler(id);
@@ -67,24 +73,22 @@ namespace wstester
 			}
 		}
 
-		string GeneratePostCommandScript(string scriptName, string paramName, object paramValue)
+		protected string GeneratePostCommandScript(string paramName, object paramValue)
 		{
-			Page.ClientScript.RegisterClientScriptBlock(Page.GetType(), "NodePostCommand", @"function NodePostCommand(name, id) {
-	if (typeof (theForm.onsubmit) === 'function')
-		if (theForm.onsubmit() === false)
-			return;
-	var e = document.createElement('input');
-	e.type = 'hidden';
-	e.name = name;
-	e.value = id;
-	theForm.appendChild(e);
-	theForm.submit();
-}
+			Page.ClientScript.RegisterClientScriptBlock(Page.GetType(), "post-command", @"
+	function postCommand(name, value) {
+		if (typeof (theForm.onsubmit) === 'function')
+			if (theForm.onsubmit() === false)
+				return;
+		var e = document.createElement('input');
+		e.type = 'hidden';
+		e.name = name;
+		e.value = value;
+		theForm.appendChild(e);
+		theForm.submit();
+	}
 ", true);
-			Page.ClientScript.RegisterClientScriptBlock(Page.GetType(), scriptName, @"function " + scriptName +
-				@"(id) { NodePostCommand('" + paramName + @"', id); }
-", true);
-			return scriptName + "('" + paramValue + "'); return false;";
+			return "postCommand('" + paramName + @"','" + paramValue + "');return false;";
 		}
 
 		protected override void OnPreInit(EventArgs e)
@@ -92,11 +96,11 @@ namespace wstester
 			base.OnPreInit(e);
 			// Handle POST commands:
 			// add array node
-			HandlePostCommand("add_array_node", id => ((ArrayNode)schemaNodes.NodeTable[id]).NewContentNode());
+			HandleNodePostCommand("add_array_node", id => ((ArrayNode)schemaNodes.NodeTable[id]).NewContentNode());
 			// delete array node
-			HandlePostCommand("delete_array_node", id => schemaNodes.NodeTable[id].Delete());
+			HandleNodePostCommand("delete_array_node", id => schemaNodes.NodeTable[id].Delete());
 			// hide optional node
-			HandlePostCommand("hide_optional_node", id => ((ContentNode)schemaNodes.NodeTable[id]).ToggleHidden());
+			HandleNodePostCommand("hide_optional_node", id => ((ContentNode)schemaNodes.NodeTable[id]).ToggleHidden());
 		}
 
 		protected override void OnInit(EventArgs e)
@@ -112,7 +116,7 @@ namespace wstester
 		else
 			$hidden.remove();
 		$(a).html(hidden ? '[&ndash;]' : '[+]');
-		$pnl.children('span').css('display', hidden ? '' : 'none');
+		$pnl.children('span.cont-class').css('display', hidden ? '' : 'none');
 		if (hidden)
 			$pnl.find('div.panel-class').addBack().each(function() {
 				adjustLabelWidth($(this));
@@ -121,7 +125,7 @@ namespace wstester
 
 	function adjustLabelWidth($pnl) {
 		var max_width = 0;
-		$pnl.children('span:visible').children('nobr').children('span:first-child').each(function() {
+		$pnl.children('span.cont-class:visible').children('nobr').children('span:first-child').each(function() {
 			var w = $(this).width();
 			if (w > max_width)
 				max_width = w;
@@ -158,7 +162,7 @@ namespace wstester
 									CssClass = "input-image-class",
 									ImageUrl = "~/Images/DELETE-1.gif",
 									ID = node.Id.ToString() + "_delete",
-									OnClientClick = GeneratePostCommandScript("DeleteArrayNodePostCommand", "delete_array_node", node.Id)
+									OnClientClick = GeneratePostCommandScript("delete_array_node", node.Id)
 								};
 						}
 						else if (contentNode.isOptional) // && contentNode.AllChildNodes().All(n => n.Type != NodeType.ContentNode || ((ContentNode)n).isOptional))
@@ -168,7 +172,7 @@ namespace wstester
 									CssClass = "input-image-class",
 									ImageUrl = contentNode.hidden ? "~/Images/NEW-1.gif" : "~/Images/DELETE-1.gif",
 									ID = node.Id.ToString() + "_hide_optional",
-									OnClientClick = GeneratePostCommandScript("HideOptionalNodePostCommand", "hide_optional_node", node.Id)
+									OnClientClick = GeneratePostCommandScript("hide_optional_node", node.Id)
 								};
 						}
 						else if (!contentNode.isComplexType)
@@ -201,10 +205,31 @@ namespace wstester
 							//pnl.Style.Add("padding-left", STYLE_PADDING_LEFT);
 							AddVerticalPadding(pnl);
 							AddLiteralControl(pnl, "<div class='title-class'><table border='0' cellspacing='0' cellpadding='0' width='100%'><tr><td style='white-space:nowrap;'>");
-							AddLiteralControl(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);'>[" + (_hidden ? "+" : "&ndash;") + "]</a>").Visible = !contentNode.hidden;
+							AddLiteralControl(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);' class='plus-minus-class'>[" + (_hidden ? "+" : "&ndash;") + "]</a>")
+								.Visible = !contentNode.hidden;
 							AddLiteralControl(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name) +
-								(!contentNode.Name.Equals(contentNode.TypeName) && ("" + contentNode.TypeName).Trim() != "" ? "&nbsp;:&nbsp;" + Server.HtmlEncode(contentNode.TypeName) : "") +
+								(("" + contentNode.BaseTypeName).Trim() != "" && !contentNode.Name.Equals(contentNode.BaseTypeName, StringComparison.OrdinalIgnoreCase) ?
+								"&nbsp;:&nbsp;<span class='type-class'>" + Server.HtmlEncode(contentNode.BaseTypeName) + "</span>" : "") +
+								(contentNode.BaseSchemaType.HasDerivedTypes ?
+								"&nbsp;:&nbsp;<a href='javascript://' onclick='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
+								"(this);' class='type-selector-class'>" + Server.HtmlEncode(contentNode.TypeName) + "</a>" : "") +
 								"</td><td width='100%'><hr class='hr-class'></td><td>");
+							if (contentNode.BaseSchemaType.HasDerivedTypes)
+							{
+								Func<IEnumerable<XmlQualifiedName>, string, string> _menu = null;
+								_menu = (_qns, _stuff) => {
+									 var res = _qns.Aggregate("", (_res, _qn) => _res + "<li>" + Server.HtmlEncode(_qn.Name) +
+										 (contentNode.schemaNodes.schemaTypes[_qn].HasDerivedTypes ?
+										 _menu(contentNode.schemaNodes.schemaTypes[_qn].DerivedTypeQNs, "") : "") + "</li>");
+									 return res.Length > 0 ? "<ul" + _stuff + ">" + res + "</ul>" : null;
+								 };
+								ClientScript.RegisterClientScriptBlock(GetType(), "inheritance-" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode(), @"
+	function inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() + @"(a) {
+		$(a).css('display', 'none');
+		var $menu = $('" + _menu(new[] { contentNode.SchemaElement.SchemaTypeQN }, /*" id=\"_menu_\""*/ " style=\"display:inline-block;\"") + @"').insertAfter(a).filter(':first').menu();
+	}
+", true);
+							}
 							if (delete != null)
 								AddControl(pnl, delete);
 							AddLiteralControl(pnl, "</td></tr></table></div>");
@@ -213,6 +238,7 @@ namespace wstester
 							if (node.ChildNodes != null && node.ChildNodes.Length > 0)
 							{
 								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span") { ViewStateMode = System.Web.UI.ViewStateMode.Disabled, Visible = !contentNode.hidden };
+								cont.Attributes["class"] = "cont-class";
 								AddControl(pnl, cont);
 								if (_hidden)
 								{
@@ -249,7 +275,7 @@ namespace wstester
 						AddControl(container, new LinkButton()
 							{
 								ID = node.Id.ToString(),
-								OnClientClick = GeneratePostCommandScript("AddArrayNodePostCommand", "add_array_node", node.Id),
+								OnClientClick = GeneratePostCommandScript("add_array_node", node.Id),
 								Text = "new &lt;" + ((ArrayNode)node).contentNode.Name + "&gt;"
 							});
 						break;
