@@ -211,7 +211,7 @@ namespace wstester
 								(("" + contentNode.BaseTypeName).Trim() != "" && !contentNode.Name.Equals(contentNode.BaseTypeName, StringComparison.OrdinalIgnoreCase) ?
 								"&nbsp;:&nbsp;<span class='type-class'>" + Server.HtmlEncode(contentNode.BaseTypeName) + "</span>" : "") +
 								(contentNode.BaseSchemaType.HasDerivedTypes ?
-								"&nbsp;:&nbsp;<a href='javascript://' onclick='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
+								"&nbsp;:&nbsp;<a href='javascript://' onmouseover='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
 								"(this);' class='type-selector-class'>" + Server.HtmlEncode(contentNode.TypeName) + "</a>" : "") +
 								"</td><td width='100%'><hr class='hr-class'></td><td>");
 							if (contentNode.BaseSchemaType.HasDerivedTypes)
@@ -223,10 +223,23 @@ namespace wstester
 										 _menu(contentNode.schemaNodes.schemaTypes[_qn].DerivedTypeQNs, "") : "") + "</li>");
 									 return res.Length > 0 ? "<ul" + _stuff + ">" + res + "</ul>" : null;
 								 };
+								ClientScript.RegisterClientScriptBlock(GetType(), "-inheritance", @"
+	function _inherit(a, html) {
+		var $a = $(a).css('display', 'none');
+		var $menu = $(html).insertAfter(a).first().menu({
+			select: function(event, ui) {
+				$a.text(ui.item.contents().filter(function() { return this.nodeType === 3; }).first().text()).css('display', '');
+				$menu.menu('destroy').remove();
+			}
+		}).mouseleave(function(event) {
+			$a.css('display', '');
+			$menu.menu('destroy').remove();
+		});
+	}
+", true);
 								ClientScript.RegisterClientScriptBlock(GetType(), "inheritance-" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode(), @"
 	function inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() + @"(a) {
-		$(a).css('display', 'none');
-		var $menu = $('" + _menu(new[] { contentNode.SchemaElement.SchemaTypeQN }, /*" id=\"_menu_\""*/ " style=\"display:inline-block;\"") + @"').insertAfter(a).filter(':first').menu();
+		_inherit(a, '" + _menu(new[] { contentNode.SchemaElement.SchemaTypeQN }, /*" id=\"_menu_\""*/ " style=\"display:inline-block;\"") + @"');
 	}
 ", true);
 							}
