@@ -208,10 +208,10 @@ namespace wstester
 							AddLiteralControl(pnl, "&nbsp;<a href='javascript://' onclick='javascript:togglePnl(this);' class='plus-minus-class'>[" + (_hidden ? "+" : "&ndash;") + "]</a>")
 								.Visible = !contentNode.hidden;
 							AddLiteralControl(pnl, "&nbsp;" + Server.HtmlEncode(contentNode.Name) +
-								(("" + contentNode.BaseTypeName).Trim() != "" && !contentNode.Name.Equals(contentNode.BaseTypeName, StringComparison.OrdinalIgnoreCase) ?
+								(("" + contentNode.BaseTypeName).Trim() != "" && !contentNode.Name.Equals(contentNode.BaseTypeName) && !contentNode.BaseSchemaType.HasDerivedTypes ?
 								"&nbsp;:&nbsp;<span class='type-class'>" + Server.HtmlEncode(contentNode.BaseTypeName) + "</span>" : "") +
 								(contentNode.BaseSchemaType.HasDerivedTypes ?
-								"&nbsp;:&nbsp;<a href='javascript://' onmouseover='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
+								"&nbsp;:&nbsp;<a href='javascript://' onclick='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
 								"(this);' class='type-selector-class'>" + Server.HtmlEncode(contentNode.TypeName) + "</a>" : "") +
 								"</td><td width='100%'><hr class='hr-class'></td><td>");
 							if (contentNode.BaseSchemaType.HasDerivedTypes)
