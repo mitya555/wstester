@@ -101,6 +101,16 @@ namespace wstester
 			HandleNodePostCommand("delete_array_node", id => schemaNodes.NodeTable[id].Delete());
 			// hide optional node
 			HandleNodePostCommand("hide_optional_node", id => ((ContentNode)schemaNodes.NodeTable[id]).ToggleHidden());
+			// change node class
+			HandlePostCommand("change_node_class", val =>
+				{
+					var tmp = val.Split('|');
+					var id = int.Parse(tmp[0]);
+					var qnHash = uint.Parse(tmp[1]);
+					var node = (ContentNode)schemaNodes.NodeTable[id];
+					node.ChildNodes = node.inheritance[node.SchemaTypeQN = schemaNodes.schemaTypeQNs[qnHash]] ??
+						(node.inheritance[node.SchemaTypeQN] = schemaNodes.ProcessSchema(GetSchema(schema).SchemaTypes[node.SchemaTypeQN]));
+				});
 		}
 
 		protected override void OnInit(EventArgs e)
@@ -212,24 +222,25 @@ namespace wstester
 								"&nbsp;:&nbsp;<span class='type-class'>" + Server.HtmlEncode(contentNode.BaseTypeName) + "</span>" : "") +
 								(contentNode.BaseSchemaType.HasDerivedTypes ?
 								"&nbsp;:&nbsp;<a href='javascript://' onclick='javascript:inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() +
-								"(this);' class='type-selector-class'>" + Server.HtmlEncode(contentNode.TypeName) + "</a>" : "") +
+								"(this," + node.Id + ");' class='type-selector-class'>" + Server.HtmlEncode(contentNode.TypeName) + "</a>" : "") +
 								"</td><td width='100%'><hr class='hr-class'></td><td>");
 							if (contentNode.BaseSchemaType.HasDerivedTypes)
 							{
 								Func<IEnumerable<XmlQualifiedName>, string, string> _menu = null;
 								_menu = (_qns, _stuff) => {
-									 var res = _qns.Aggregate("", (_res, _qn) => _res + "<li>" + Server.HtmlEncode(_qn.Name) +
+									 var res = _qns.Aggregate("", (_res, _qn) => _res + "<li data-qn-hash=\"" + (uint)_qn.GetHashCode() + "\">" + Server.HtmlEncode(_qn.Name) +
 										 (contentNode.schemaNodes.schemaTypes[_qn].HasDerivedTypes ?
 										 _menu(contentNode.schemaNodes.schemaTypes[_qn].DerivedTypeQNs, "") : "") + "</li>");
 									 return res.Length > 0 ? "<ul" + _stuff + ">" + res + "</ul>" : null;
 								 };
 								ClientScript.RegisterClientScriptBlock(GetType(), "-inheritance", @"
-	function _inherit(a, html) {
+	function _inherit(a, node_id, html) {
 		var $a = $(a).css('display', 'none');
 		var $menu = $(html).insertAfter(a).first().menu({
 			select: function(event, ui) {
-				$a.text(ui.item.contents().filter(function() { return this.nodeType === 3; }).first().text()).css('display', '');
-				$menu.menu('destroy').remove();
+				//$a.text(ui.item.contents().filter(function() { return this.nodeType === 3; }).first().text()).css('display', '');
+				//$menu.menu('destroy').remove();
+				postCommand('change_node_class', node_id + '|' + ui.item.data('qnHash'));
 			}
 		}).mouseleave(function(event) {
 			$a.css('display', '');
@@ -238,8 +249,8 @@ namespace wstester
 	}
 ", true);
 								ClientScript.RegisterClientScriptBlock(GetType(), "inheritance-" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode(), @"
-	function inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() + @"(a) {
-		_inherit(a, '" + _menu(new[] { contentNode.SchemaElement.SchemaTypeQN }, /*" id=\"_menu_\""*/ " style=\"display:inline-block;\"") + @"');
+	function inherit_" + (uint)contentNode.SchemaElement.SchemaTypeQN.GetHashCode() + @"(a, node_id) {
+		_inherit(a, node_id, '" + _menu(new[] { contentNode.SchemaElement.SchemaTypeQN }, /*" id=\"_menu_\""*/ " style=\"display:inline-block;\"") + @"');
 	}
 ", true);
 							}

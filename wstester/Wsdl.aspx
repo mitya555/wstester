@@ -124,17 +124,17 @@
 <body>
 	<form id="form1" runat="server">
 	<div>
-		<table cellpadding="0" cellspacing="0" width="100%"><tr><td valign="top" style="padding-top:4px;white-space:nowrap;">
-		WSDL/WADL URL:&nbsp;&nbsp;<br />
-		<asp:LinkButton ID="DelUrlsButton" runat="server" onclick="DelUrlsButton_Click" CssClass="link-button-class" style="font-size:7pt;font-style:italic;">Clear URL hints</asp:LinkButton>
-		</td><td style="width:100%;white-space:nowrap;" valign="top">
-		<asp:TextBox ID="WsdlTextBox" runat="server" Width="570px"></asp:TextBox>&nbsp;&nbsp;
-		<asp:Button ID="WsdlButton" runat="server" onclick="WsdlButton_Click" CssClass="link-button-class" Text="Get WSDL/WADL" />&nbsp;&nbsp;
-		<span style="font-size:8pt;">
-			Basic Auth.: 
-			username:<asp:TextBox ID="UsernameTextBox" runat ="server" Font-Size="8pt"></asp:TextBox> 
-			password:<asp:TextBox ID="PasswordTextBox" runat ="server" TextMode="Password" Font-Size="8pt"></asp:TextBox>
-		</span>
+		<table cellpadding="0" cellspacing="0" width="100%"><tr><td style="white-space:nowrap;">
+			WSDL/WADL URL:&nbsp;&nbsp;
+		</td><td style="width:100%;white-space:nowrap;">
+			<asp:TextBox ID="WsdlTextBox" runat="server" Width="570px"></asp:TextBox>&nbsp;&nbsp;
+			<asp:Button ID="WsdlButton" runat="server" onclick="WsdlButton_Click" CssClass="link-button-class" Text="Get WSDL/WADL" />&nbsp;&nbsp;
+		</td></tr><tr style="font-size:8pt;font-style:italic;vertical-align:top;"><td>
+			<asp:LinkButton ID="DelUrlsButton" runat="server" onclick="DelUrlsButton_Click" CssClass="link-button-class">Clear URL hints</asp:LinkButton>
+		</td><td>
+			<a href="javascript://" onclick="$('#basic-auth-id').toggle()" style="text-decoration:none;">Basic Authentcation</a><span id="basic-auth-id" style="display:none;">:<br /> 
+			Username: <asp:TextBox ID="UsernameTextBox" runat ="server" Font-Size="8pt"></asp:TextBox> 
+			Password: <asp:TextBox ID="PasswordTextBox" runat ="server" TextMode="Password" Font-Size="8pt"></asp:TextBox></span>
 		</td></tr></table>
 		<hr />
 		<asp:TreeView ID="TreeView1" runat="server" ImageSet="Arrows" >

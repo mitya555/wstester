@@ -18,8 +18,10 @@ namespace wstester
 		public IDictionary<int, BaseNode> NodeTable { get { return auxNodeTable; } }
 		public BaseNode[] Nodes { get { return nodes; } }
 
-		public readonly Dictionary<XmlQualifiedName, SchemaType> schemaTypes = new Dictionary<XmlQualifiedName,SchemaType>();
-		public readonly Dictionary<XmlQualifiedName, SchemaElement> schemaElements = new Dictionary<XmlQualifiedName,SchemaElement>();
+		public readonly Dictionary<XmlQualifiedName, SchemaType> schemaTypes = new Dictionary<XmlQualifiedName, SchemaType>();
+		public readonly Dictionary<XmlQualifiedName, SchemaElement> schemaElements = new Dictionary<XmlQualifiedName, SchemaElement>();
+
+		public readonly Dictionary<uint, XmlQualifiedName> schemaTypeQNs = new Dictionary<uint, XmlQualifiedName>();
 
 		public static XmlSchema GetSchema(XmlSchemaObject schemaObject)
 		{
@@ -31,7 +33,7 @@ namespace wstester
 			}
 		}
 
-		protected BaseNode[] ProcessSchema(XmlSchemaObject schema)
+		public BaseNode[] ProcessSchema(XmlSchemaObject schema)
 		{
 			if (schema is XmlSchema)
 			{
@@ -255,7 +257,10 @@ namespace wstester
 					derivedTypeQNs = GetDerivedTypeQNs(xmlSchemaType, schema, schemaNodes)
 				};
 				if (!qn.IsEmpty)
+				{
 					schemaNodes.schemaTypes.Add(qn, res);
+					schemaNodes.schemaTypeQNs.Add((uint)qn.GetHashCode(), qn);
+				}
 			}
 			return res ?? schemaNodes.schemaTypes[qn];
 		}

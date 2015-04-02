@@ -102,7 +102,7 @@
 	private void SetHiddenAllOptional(bool hidden)
 	{
 		foreach (var _node in BaseNode.AllNodes(schemaNodes.Nodes).OfType<ContentNode>())
-			if (_node.isOptional)
+			if (_node.isOptional && !_node.isArray)
 				_node.hidden = hidden;
 	}
 	
@@ -281,23 +281,23 @@
 	<title>Web Service Operation</title>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/flick/jquery-ui.css" />
 	<style type="text/css">
-		body, input, select { font: 8pt Arial; }
-		.label-class { /*font: 9pt Arial;*/ font-weight: bold; font-style: italic; }
+		body, input, select { font-size: 8pt; /*font-family: Arial, Helvetica, sans-serif;*/ font-family: Verdana, Geneva, Tahoma, sans-serif; }
+		.label-class { /*font: 9pt Arial; font-weight: bold; font-style: italic;*/ }
 		.input-image-class, .input-text-class { height: 9pt; border-style: none; vertical-align: middle; }
-		.input-text-class { background-color: #dcecfc; width: 250px; }
-		.input-select-class { height: 10pt; /*margin-top: -1px;*/ }
+		.input-text-class { background-color: #dcecfc; width: 250px; border: 1px solid #dcecfc; }
+		.input-select-class { height: 12pt; /*margin-top: -1px;*/ border: 0px solid #dcecfc; width: 254px; }
 		.panel-class { padding: 0px 3px 0px 12px; }
 		.vertical-margin { height: 3px; }
-		.title-class { background-color: #B8BFD8; color: #AA0000; font-weight: bold; /*font-family: Verdana;*/ }
-		.title-class a { color: white; font-weight: bold; font-family: Verdana; font-size: 7.5pt; /*vertical-align: top;*/ }
+		.title-class { background-color: #B8BFD8; color: #AA0000; font-weight: bold; font-family: Verdana, Geneva, Tahoma, sans-serif; padding-top: 1px; padding-bottom: 1px; }
+		.title-class a { color: white; /*font-weight: bold; font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 7.5pt; vertical-align: top;*/ }
 		.hr-class { display: none; }
 		a, a:hover { text-decoration: none; }
 		.submit-button-class { width: 75px; margin-right: 5px; }
 		.placeholder { color: #aaa; }
 		.type-class { color: #003580; }
-		a.type-selector-class { /*color: #006aff;*/ font-weight: normal; }
-		a.plus-minus-class { vertical-align: 1px; }
-		.ui-widget { font-family: Trebuchet MS, Tahoma, Verdana, Arial, sans-serif; font-size: 7.5pt; /*line-height: 7.5pt;*/ }
+		a.type-selector-class { /*color: #006aff;*/ font-weight: bold; }
+		a.plus-minus-class { vertical-align: 2px; font-weight: bold; font-family: Arial, Helvetica, sans-serif; }
+		.ui-widget { font-family: Verdana, Geneva, Tahoma, sans-serif; font-size: 8pt; /*font-weight: normal; font-size: 7.5pt; line-height: 7.5pt;*/ }
 		.ui-menu .ui-menu-item { padding-top: 1px; padding-bottom: 1px; }
 	</style>
 	<script type='text/javascript' src="//code.jquery.com/jquery-1.8.3.min.js"></script>
