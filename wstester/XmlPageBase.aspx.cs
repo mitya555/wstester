@@ -109,9 +109,11 @@ namespace wstester
 					var qnHash = uint.Parse(tmp[1]);
 					var node = (ContentNode)schemaNodes.NodeTable[id];
 					node.ChildNodes = node.inheritance[node.SchemaTypeQN = schemaNodes.schemaTypeQNs[qnHash]] ??
-						(node.inheritance[node.SchemaTypeQN] = schemaNodes.ProcessSchema(GetSchema(schema).SchemaTypes[node.SchemaTypeQN]));
+						(node.inheritance[node.SchemaTypeQN] = schemaNodes.ProcessSchema(GetSchema().SchemaTypes[node.SchemaTypeQN]));
 				});
 		}
+
+		protected virtual XmlSchema GetSchema() { throw new NotImplementedException(); }
 
 		protected override void OnInit(EventArgs e)
 		{
@@ -332,6 +334,29 @@ namespace wstester
 							var newNode = contentNode.isAttribute ?
 								container.Attributes.Append(doc.CreateAttribute(getPrefix(), contentNode.Name, ns)) :
 								container.AppendChild(doc.CreateElement(getPrefix(), contentNode.Name, ns));
+							if (!contentNode.SchemaTypeQN.IsEmpty && !contentNode.SchemaTypeQN.Equals(contentNode.SchemaElement.SchemaTypeQN))
+							{
+								var xsi_ns = "http://www.w3.org/2001/XMLSchema-instance";
+								var type_prefix = newNode.GetPrefixOfNamespace(xsi_ns);
+								if (!xsi_ns.Equals(newNode.GetNamespaceOfPrefix(type_prefix)))
+									type_prefix = "xsi";
+								var type_attr = doc.CreateAttribute(type_prefix, "type", xsi_ns);
+								newNode.Attributes.Append(type_attr);
+								var val_prefix = newNode.GetPrefixOfNamespace(contentNode.SchemaTypeQN.Namespace);
+								var defineNs = false;
+								if (!contentNode.SchemaTypeQN.Namespace.Equals(newNode.GetNamespaceOfPrefix(val_prefix)))
+								{
+									val_prefix = "ns" + (++nsInd);
+									defineNs = true;
+								}
+								type_attr.AppendChild(doc.CreateTextNode(("" + val_prefix != "" ? val_prefix + ":" : "") + contentNode.SchemaTypeQN.Name));
+								if (defineNs)
+								{
+									var ns_attr = doc.CreateAttribute("xmlns", val_prefix, "http://www.w3.org/2000/xmlns/");
+									newNode.Attributes.Append(ns_attr);
+									ns_attr.AppendChild(doc.CreateTextNode(contentNode.SchemaTypeQN.Namespace));
+								}
+							}
 							if (contentNode.isComplexType)
 							{
 								if (node.ChildNodes != null)

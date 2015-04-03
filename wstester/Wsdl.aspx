@@ -136,7 +136,7 @@
 			Username: <asp:TextBox ID="UsernameTextBox" runat ="server" Font-Size="8pt"></asp:TextBox> 
 			Password: <asp:TextBox ID="PasswordTextBox" runat ="server" TextMode="Password" Font-Size="8pt"></asp:TextBox></span>
 		</td></tr></table>
-		<hr />
+		<hr style="margin-top:3px;margin-bottom:3px;" />
 		<asp:TreeView ID="TreeView1" runat="server" ImageSet="Arrows" >
 			<ParentNodeStyle Font-Bold="False" />
 			<LevelStyles>

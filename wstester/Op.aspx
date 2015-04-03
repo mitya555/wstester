@@ -13,6 +13,18 @@
 	private HiddenField bodyChanged;
 	private CheckBox formatResultXml, showResultInPopup;
 
+	protected override XmlSchema GetSchema()
+	{
+		var wsdl_ = (XmlDocument[])Session["wsdl"];
+		var nsmgr = (XmlNamespaceManager)Session["nsmgr"];
+		var xss = (XmlSchemaSet)Session["xss"];
+		var operation = Wsdl.Operation.Deserialize(Request["operation"]);
+		var msg_in = wsdl_.SelectSingleNodeByNameGlobal("/w:definitions/w:message", operation.msg_in, nsmgr)
+			.SelectSingleNode("w:part"/*"[@name='parameters']"*/, nsmgr).AttrValueAsName("element");
+		var schema = xss.Schemas(msg_in.Namespace).Cast<XmlSchema>().First();
+		return schema;
+	}
+	
 	protected void Page_PreInit(object sender, EventArgs e)
 	{
 		if (IsPostBack || Request["operation"].Equals(Session["Operation"]))

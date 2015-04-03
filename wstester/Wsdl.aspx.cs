@@ -190,7 +190,7 @@ namespace wstester
 					service_node.ChildNodes.Add(port_node);
 					var binding = port.GetBindingFromPort(wsdl_, nsmgr);
 					var port_type = binding.GetPortTypeFromBinding(wsdl_, nsmgr);
-					foreach (var op in port_type.SelectNodes("w:operation", nsmgr).Cast<XmlElement>())
+					foreach (var op in port_type.SelectNodes("w:operation", nsmgr).Cast<XmlElement>().OrderBy(o => o.Attributes["name"].Value))
 					{
 						var doc = op.SelectSingleNode("w:documentation", nsmgr);
 						operation.op = op.Attributes["name"].Value;
