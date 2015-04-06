@@ -105,7 +105,7 @@
 		if (IsPostBack)
 		{
 			// remove/hide all optional nodes
-			HandlePostCommand("remove_all_optional", val => SetHiddenAllOptional(true));
+			HandlePostCommand("remove_all_optional", val => /*SetHiddenAllOptional(true)*/{ foreach (var node in schemaNodes.Nodes) HideAllEmptyOptional(node); });
 			// unhide all optional nodes
 			HandlePostCommand("unhide_all_optional", val => SetHiddenAllOptional(false));
 		}
@@ -116,6 +116,27 @@
 		foreach (var _node in BaseNode.AllNodes(schemaNodes.Nodes).OfType<ContentNode>())
 			if (_node.isOptional && !_node.isArray)
 				_node.hidden = hidden;
+	}
+
+	private bool HideAllEmptyOptional(BaseNode parent)
+	{
+		bool _hide = true;
+		if (!(parent is ContentNode && ((ContentNode)parent).hidden))
+		{
+			foreach (var _node in parent.GetChildNodes())
+				_hide &= HideAllEmptyOptional(_node);
+			if (_hide && parent is ContentNode)
+			{
+				var _node = (ContentNode)parent;
+				//var _ctrl = FindControl(_node.controlID);
+				//if (_ctrl is ITextControl)
+				//	_hide = (((ITextControl)_ctrl).Text ?? "").Length == 0;
+				_hide = (Request.Form[_node.controlID] ?? "").Length == 0;
+				if (_hide && _node.isOptional && !_node.isArray)
+					_node.hidden = true;
+			}
+		}
+		return _hide;
 	}
 	
 	protected void Page_Init(object sender, EventArgs e)

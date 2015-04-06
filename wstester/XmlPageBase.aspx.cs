@@ -260,7 +260,7 @@ namespace wstester
 								AddControl(pnl, delete);
 							AddLiteralControl(pnl, "</td></tr></table></div>");
 							AddVerticalPadding(pnl);
-							contentNode.controlID = pnl.ID;
+							contentNode.controlID = pnl.UniqueID;
 							if (node.ChildNodes != null && node.ChildNodes.Length > 0)
 							{
 								var cont = new System.Web.UI.HtmlControls.HtmlGenericControl("span") { ViewStateMode = System.Web.UI.ViewStateMode.Disabled, Visible = !contentNode.hidden };
@@ -283,7 +283,8 @@ namespace wstester
 							var webCtrl = (WebControl)AddControl(container, contentNode.IsEnumeration ? (Control)new DropDownList() : (Control)new TextBox());
 							AddLiteralControl(container, "</span>");
 							webCtrl.ViewStateMode = System.Web.UI.ViewStateMode.Enabled;
-							contentNode.controlID = webCtrl.ID = node.Id.ToString();
+							webCtrl.ID = node.Id.ToString();
+							contentNode.controlID = webCtrl.UniqueID;
 							webCtrl.CssClass = "input-text-class" + (contentNode.IsEnumeration ? " input-select-class" : "");
 							if (("" + contentNode.TypeName).Trim() != "")
 								webCtrl.Attributes.Add("placeholder", contentNode.TypeName);
@@ -364,8 +365,8 @@ namespace wstester
 							}
 							else
 								newNode.AppendChild(doc.CreateTextNode(contentNode.IsEnumeration ?
-									((DropDownList)CtrlContainer.FindControl(contentNode.controlID)).SelectedValue :
-									((TextBox)CtrlContainer.FindControl(contentNode.controlID)).Text));
+									((DropDownList)FindControl(contentNode.controlID)).SelectedValue :
+									((TextBox)FindControl(contentNode.controlID)).Text));
 						}
 						break;
 					case NodeType.GroupNode:

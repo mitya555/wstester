@@ -182,6 +182,12 @@ namespace wstester
 						child.parentNode = this;
 			}
 		}
+		public IEnumerable<BaseNode> GetChildNodes()
+		{
+			if (childNodes != null)
+				foreach (var node in childNodes)
+					yield return node;
+		}
 		public static IEnumerable<BaseNode> AllNodes(IEnumerable<BaseNode> nodes)
 		{
 			if (nodes != null)
