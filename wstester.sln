@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wstester", "wstester\wstester.csproj", "{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "winwstester", "winwstester\winwstester.csproj", "{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}"
@@ -15,10 +17,10 @@ Global
 		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51068F8D-9233-4EDE-83CF-3F0C5D07AE30}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Debug|Any CPU.Build.0 = Debug|x86
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.ActiveCfg = Release|x86
+		{9B3ABA8F-2B33-43B0-B6ED-014B0E94F178}.Release|Any CPU.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
