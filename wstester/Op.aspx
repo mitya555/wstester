@@ -24,7 +24,7 @@
 		var schema = xss.Schemas(msg_in.Namespace).Cast<XmlSchema>().First();
 		return schema;
 	}
-	
+
 	protected void Page_PreInit(object sender, EventArgs e)
 	{
 		if (IsPostBack || Request["operation"].Equals(Session["Operation"]))
@@ -48,15 +48,24 @@
 
 			schemaNodes = SchemaNodes.FromXmlSchema(schema.Elements[msg_in]);
 
-			var service = wsdl_.GetServiceByName(operation.service, nsmgr);
-			var port = service.GetPortFromServiceByName(operation.port, nsmgr);
-			var binding = port.GetBindingFromPort(wsdl_, nsmgr);
+			XmlNode binding;
+			XmlElement port_address = null;
+			if (operation.binding == null)
+			{
+				var service = wsdl_.GetServiceByName(operation.service, nsmgr);
+				var port = service.GetPortFromServiceByName(operation.port, nsmgr);
+				binding = port.GetBindingFromPort(wsdl_, nsmgr);
+				port_address = port.ChildNodes.OfType<XmlElement>().FirstOrDefault(xml => "address".Equals(xml.LocalName));
+			}
+			else
+			{
+				binding = wsdl_.SelectSingleNodeByNameGlobal("/w:definitions/w:binding", operation.binding, nsmgr);
+			}
 			var typed_binding = binding.ChildNodes.OfType<XmlElement>().FirstOrDefault(xml => "binding".Equals(xml.LocalName));
 			var bindingNamespacePrefix = typed_binding != null ? nsmgr.LookupPrefix(typed_binding.NamespaceURI) : "http";
 			var portType = binding.GetPortTypeFromBinding(wsdl_, nsmgr);
 			var portType_op = portType.GetOperationFromParentByName(operation.op, nsmgr);
 
-			var port_address = port.ChildNodes.OfType<XmlElement>().FirstOrDefault(xml => "address".Equals(xml.LocalName));
 			var port_url = new Uri(port_address != null ? port_address.Attributes["location"].Value : operation.wsdl.Split('?')[0]);
 			if (port_address != null && ("localhost".Equals(port_url.Host) || "127.0.0.1".Equals(port_url.Host)))
 			{
@@ -138,17 +147,17 @@
 		}
 		return _hide;
 	}
-	
+
 	protected void Page_Init(object sender, EventArgs e)
 	{
-//        var headers = (Button)AddButtonControl(CtrlContainer, new Button(), "Headers", null);
-//        headers.UseSubmitBehavior = false;
-//        headers.OnClientClick = @"javascript:headers_fancybox(jQuery);return false;";
-//        ClientScript.RegisterStartupScript(GetType(), "headers-fancybox-startup", @"
-//	function headers_fancybox($) {
-//		$.fancybox($.extend({ href: 'Headers.aspx' ,type: 'iframe'}, fancybox_options));
-//	}
-//", true);
+		//        var headers = (Button)AddButtonControl(CtrlContainer, new Button(), "Headers", null);
+		//        headers.UseSubmitBehavior = false;
+		//        headers.OnClientClick = @"javascript:headers_fancybox(jQuery);return false;";
+		//        ClientScript.RegisterStartupScript(GetType(), "headers-fancybox-startup", @"
+		//	function headers_fancybox($) {
+		//		$.fancybox($.extend({ href: 'Headers.aspx' ,type: 'iframe'}, fancybox_options));
+		//	}
+		//", true);
 		AddButtonControl(CtrlContainer, new Button() { ID = "headers-button", CssClass = "submit-button-class" }, "Headers", btnHeaders_Click);
 		AddButtonControl(CtrlContainer, new Button() { ID = "preview-button", CssClass = "submit-button-class" }, "Preview", btnXml_Click);
 		AddButtonControl(CtrlContainer, new Button() { ID = "call-button", CssClass = "submit-button-class" }, "Call", btnSend_Click);
@@ -193,7 +202,7 @@
 	//		ClientScript.RegisterHiddenField("SchemaNodes", Convert.ToBase64String(stream.ToArray()));
 	//	}
 	//}
-	
+
 	string SoapBuildXml(BaseNode[] nodes, bool soap11, bool formatted)
 	{
 		XmlDocument doc;
@@ -247,7 +256,7 @@
 				UpdateContentLengthHeader(xml);
 				string result;
 				bool bHttpWebRequest = (port_url.Scheme == Uri.UriSchemeHttps);
-//#if HttpWebRequest
+				//#if HttpWebRequest
 				if (bHttpWebRequest)
 				{
 					try
@@ -261,7 +270,7 @@
 						result = Http.FormatResponseXml((HttpWebResponse)ex.Response, formatResultXml.Checked);
 					}
 				}
-//#else
+				//#else
 				else
 				{
 					result = Http.SocketSendReceive(port_url.Host, port_url.Port,
@@ -269,7 +278,7 @@
 					if (formatResultXml.Checked)
 						result = Http.FormatSocketXml(result);
 				}
-//#endif
+				//#endif
 
 				AddVerticalPadding(Page.Form);
 				AddLiteralControl(Page.Form, "<div id='xml-div'><pre>" +

@@ -24,7 +24,7 @@ namespace wstester
 		[Serializable]
 		public class Operation
 		{
-			public XmlQualifiedName service, msg_in, msg_out;
+			public XmlQualifiedName service, msg_in, msg_out, binding;
 			public string wsdl, port, op;
 			public string username, password;
 			public string Serialize()
@@ -43,7 +43,7 @@ namespace wstester
 					return (Operation)new BinaryFormatter().Deserialize(zstream);
 			}
 			public string ServiceText { get { return "Service: " + service.Name; } }
-			public string PortText { get { return "Port: " + port; } }
+			public string PortText { get { return (binding == null ? "Port: " : "Binding: ") + port; } }
 			public string OpText { get { return /*"Operation: " +*/ op /*+ (doc != null ? "\t-\t" + doc.InnerText : "")*/; } }
 			public string TreeViewPath { get { return ServiceText + "/" + PortText + "/" + OpText; } }
 		}
@@ -176,8 +176,10 @@ namespace wstester
 		{
 			TreeView1.Nodes.Clear();
 			var operation = new Wsdl.Operation() { wsdl = wsdlUrl, username = username, password = password };
+			var hasServices = false;
 			foreach (var wservice in wsdl_.SelectMany(x => x.SelectNodes("/w:definitions/w:service", nsmgr).Cast<XmlElement>()))
 			{
+				hasServices = true;
 				operation.service = wservice.GetName();
 				var service_node = new TreeNode(operation.ServiceText);
 				service_node.SelectAction = TreeNodeSelectAction.Expand;
@@ -189,6 +191,39 @@ namespace wstester
 					port_node.SelectAction = TreeNodeSelectAction.Expand;
 					service_node.ChildNodes.Add(port_node);
 					var binding = port.GetBindingFromPort(wsdl_, nsmgr);
+					var port_type = binding.GetPortTypeFromBinding(wsdl_, nsmgr);
+					foreach (var op in port_type.SelectNodes("w:operation", nsmgr).Cast<XmlElement>().OrderBy(o => o.Attributes["name"].Value))
+					{
+						var doc = op.SelectSingleNode("w:documentation", nsmgr);
+						operation.op = op.Attributes["name"].Value;
+						var op_node = new TreeNode(operation.OpText);
+						port_node.ChildNodes.Add(op_node);
+						if (doc != null)
+						{
+							var doc_node = new TreeNode(doc.InnerText);
+							doc_node.SelectAction = TreeNodeSelectAction.Expand;
+							op_node.ChildNodes.Add(doc_node);
+						}
+						operation.msg_in = op.GetInputOutputFromOperation(InOut.input, nsmgr).GetMessageFromInputOutput(wsdl_, nsmgr).GetName();
+						operation.msg_out = op.GetInputOutputFromOperation(InOut.output, nsmgr).GetMessageFromInputOutput(wsdl_, nsmgr).GetName();
+						op_node.NavigateUrl = "Op.aspx?operation=" + HttpUtility.UrlEncode(operation.Serialize());
+						//op_node.Target = "_blank";
+					}
+				}
+			}
+			if (!hasServices)
+			{
+				operation.service = new XmlQualifiedName("<unknown>");
+				var service_node = new TreeNode(operation.ServiceText);
+				service_node.SelectAction = TreeNodeSelectAction.Expand;
+				TreeView1.Nodes.Add(service_node);
+				foreach (var binding in wsdl_.SelectMany(x => x.SelectNodes("/w:definitions/w:binding", nsmgr).Cast<XmlElement>()))
+				{
+					operation.port = binding.Attributes["name"].Value;
+					operation.binding = binding.GetName();
+					var port_node = new TreeNode(operation.PortText);
+					port_node.SelectAction = TreeNodeSelectAction.Expand;
+					service_node.ChildNodes.Add(port_node);
 					var port_type = binding.GetPortTypeFromBinding(wsdl_, nsmgr);
 					foreach (var op in port_type.SelectNodes("w:operation", nsmgr).Cast<XmlElement>().OrderBy(o => o.Attributes["name"].Value))
 					{
